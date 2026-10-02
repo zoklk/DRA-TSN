@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tsn-controller
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tsn-controller
+rules:
+  - apiGroups: ["tsn.dra.net"]
+    resources: ["tsnnics"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["tsn.dra.net"]
+    resources: ["tsnstreams"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["tsn.dra.net"]
+    resources: ["tsnstreams/status"]
+    verbs: ["get", "update", "patch"]
+  # leader election
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tsn-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tsn-controller
+subjects:
+  - kind: ServiceAccount
+    name: tsn-controller
+    namespace: kube-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tsn-controller
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: tsn-controller }
+  template:
+    metadata:
+      labels: { app: tsn-controller }
+    spec:
+      serviceAccountName: tsn-controller
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: controller
+          image: REGISTRY/dratsn-controller:TAG
+          imagePullPolicy: Always
+          args:
+            - "-cnc-url=http://mock-cnc.kube-system.svc:8080"
+            - "-leader-election=true"
+            - "-leader-election-namespace=kube-system"
+            - "-v=2"

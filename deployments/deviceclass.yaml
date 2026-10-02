@@ -1,0 +1,8 @@
+apiVersion: resource.k8s.io/v1
+kind: DeviceClass
+metadata:
+  name: tsn.dra.net
+spec:
+  selectors:
+    - cel:
+        expression: "device.driver == 'tsn.dra.net'"

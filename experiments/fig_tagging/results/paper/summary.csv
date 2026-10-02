@@ -1,0 +1,17 @@
+scenario,point,total,tagged_correct,tagged_wrong,untagged,delivered
+tx-ot,wire,200,200,0,0,0
+tx-it,wire,200,0,0,200,0
+txbase-ot,wire,200,0,0,200,0
+txbase-it,wire,200,0,0,200,0
+rx-ot,wire,0,0,0,0,0
+rx-it,wire,200,0,0,200,0
+rx-ot,xdp,200,200,0,0,0
+rx-it,xdp,200,200,0,0,0
+rx-ot,pod,200,0,0,200,200
+rx-it,pod,0,0,0,0,0
+rxbase-ot,wire,200,0,0,200,0
+rxbase-it,wire,200,0,0,200,0
+rxbase-ot,xdp,200,200,0,0,0
+rxbase-it,xdp,200,200,0,0,0
+rxbase-ot,pod,0,0,0,0,0
+rxbase-it,pod,0,0,0,0,0

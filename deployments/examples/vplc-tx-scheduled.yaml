@@ -1,0 +1,50 @@
+# vplc-tx placed by the tsn-scheduler (TSNSlackScore + soft topology spread)
+# instead of the default scheduler. Same TSN TX claim as vplc-tx.yaml; the DRA
+# Filter still decides feasibility, the tsn-scheduler profile only changes how
+# ties between feasible TSN nodes are broken: spread first (soft — collapses
+# onto one node rather than going Pending when only one TSN node remains),
+# then max TX slack.
+apiVersion: resource.k8s.io/v1
+kind: ResourceClaimTemplate
+metadata:
+  name: tsn-tx-cell-a-sched
+  namespace: dratsn-test
+spec:
+  spec:
+    devices:
+      requests:
+        - name: tsn-stream
+          exactly:
+            deviceClassName: tsn.dra.net
+            selectors:
+              - cel:
+                  expression: >-
+                    device.attributes['tsn.dra.net'].domainId == 'cell-A' &&
+                    device.attributes['tsn.dra.net'].direction == 'TX'
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vplc-tx-sched
+  namespace: dratsn-test
+  labels:
+    app: vplc
+spec:
+  schedulerName: tsn-scheduler
+  restartPolicy: Never
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels: { app: vplc }
+  containers:
+    - name: vplc
+      image: busybox:1.36
+      command: ["sh", "-c", "echo vPLC up; env | grep TSN_ || true; sleep 3600"]
+      resources:
+        claims:
+          - name: tsn
+  resourceClaims:
+    - name: tsn
+      resourceClaimTemplateName: tsn-tx-cell-a-sched

@@ -1,0 +1,5 @@
+arm,cycle,phase,pool,requests_mcpu,allocatable_mcpu,pct
+dratsn,1,pre,tsn,32400,36000,90.0
+dratsn,1,pre,general,29400,36000,81.7
+dratsn,1,post,tsn,22600,24000,94.2
+dratsn,1,post,general,30400,36000,84.4

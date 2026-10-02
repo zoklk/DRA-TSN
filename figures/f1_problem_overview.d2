@@ -1,0 +1,63 @@
+# F1 — 공장 도메인 안에서 제어 흐름이 깨지는 지점과 DRA-TSN이 받는 자리.
+# 한 장에 담는 것: (a) 셀에서 노드까지의 네트워크 흐름, (b) 그 흐름이 끊기는
+# 세 지점 ①②③, (c) 각 지점을 받는 컴포넌트. 세부 구현은 그리지 않는다.
+# render: ./render.sh  (D2=~/.local/bin/d2, LAYOUT=elk)
+
+direction: down
+
+ot: "OT 현장" {
+  style: {fill: "#f4f7fb"; stroke: "#8a8a86"}
+  cell: "셀 A\n로봇 + 센서" {shape: rectangle; style.fill: "#ffffff"}
+  plc_req: "제어 루프 마감\n2 ms = 1 ms 연산 + 1 ms 전송" {
+    shape: rectangle
+    style: {fill: "#fff6e5"; stroke: "#eda100"; font-size: 13}
+  }
+}
+
+net: "TSN 네트워크 (CNC가 사전 계산·배포)" {
+  style: {fill: "#eef4fd"; stroke: "#2a78d6"}
+  cnc: "CNC\n경로 + GCL 계산" {shape: rectangle; style.fill: "#ffffff"}
+  sw: "TSN 스위치\n802.1Qbv 보호 창" {shape: rectangle; style.fill: "#ffffff"}
+  nic_a: "노드 A NIC\n(스트림 있음)" {shape: rectangle; style.fill: "#ffffff"}
+  nic_b: "노드 B NIC\n(스트림 없음)" {shape: rectangle; style: {fill: "#ffffff"; stroke-dash: 3}}
+  cnc -> sw: "GCL 배포" {style.stroke: "#2a78d6"}
+  sw -> nic_a: "예약된 스트림" {style: {stroke: "#2a78d6"; stroke-width: 3}}
+  sw -> nic_b: "경로 없음" {style: {stroke: "#8a8a86"; stroke-dash: 4}}
+}
+
+k8s: "Kubernetes 클러스터" {
+  style: {fill: "#f7f7f5"; stroke: "#52514e"}
+  sched: "스케줄러\nCPU · 메모리만 본다" {shape: rectangle; style.fill: "#ffffff"}
+  node_a: "노드 A" {shape: rectangle; style.fill: "#ffffff"}
+  node_b: "노드 B" {shape: rectangle; style.fill: "#ffffff"}
+  pod: "vPLC Pod" {shape: rectangle; style: {fill: "#e8f4ee"; stroke: "#1baf7a"}}
+  sched -> node_b: "① 경로 없는 노드에 배치" {
+    style: {stroke: "#d64545"; stroke-width: 2}
+  }
+  pod -> node_b: "② veth를 나온 프레임에\nVLAN / PCP 없음" {
+    style: {stroke: "#d64545"; stroke-width: 2; stroke-dash: 3}
+  }
+}
+
+ot.cell -> net.sw: "제어 트래픽 (OPC UA PubSub)" {style.stroke: "#2a78d6"}
+net.nic_a -> k8s.node_a {style: {stroke: "#2a78d6"; stroke-width: 3}}
+net.nic_b -> k8s.node_b {style: {stroke: "#8a8a86"; stroke-dash: 4}}
+
+miss: "③ 주기 마감 위반\n= 제어 품질 붕괴" {
+  shape: rectangle
+  style: {fill: "#fdecec"; stroke: "#d64545"; font-size: 14; bold: true}
+}
+k8s.node_b -> miss {style: {stroke: "#d64545"; stroke-width: 2}}
+
+sol: "DRA-TSN" {
+  style: {fill: "#eefaf4"; stroke: "#1baf7a"}
+  aware: "경로 인식\nCNC의 스트림을 DRA 자원으로 게시\n→ 경로 보유 노드에만 배치" {
+    shape: rectangle; style.fill: "#ffffff"
+  }
+  enforce: "경로 집행\neBPF가 선언된 흐름만 태깅\n→ 보호 창으로 전송" {
+    shape: rectangle; style.fill: "#ffffff"
+  }
+}
+sol.aware -> k8s.sched: "① 해소" {style: {stroke: "#1baf7a"; stroke-width: 2}}
+sol.enforce -> k8s.pod: "② 해소" {style: {stroke: "#1baf7a"; stroke-width: 2}}
+net.cnc -> sol.aware: "스트림 정보 (읽기 전용)" {style: {stroke: "#1baf7a"; stroke-dash: 3}}

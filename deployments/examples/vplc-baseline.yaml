@@ -1,0 +1,29 @@
+# Baseline vPLC for the cilium-path round-trip comparison (NO DRA-TSN) — figures f3/f4.
+# Same pod as mock-vplc.yaml MINUS the TSN ResourceClaim: traffic takes cilium's normal
+# datapath (veth -> cilium -> NIC, BPF-masqueraded, untagged best-effort) instead of the
+# eBPF fast path. Measures the control-cycle round-trip (probe-loop-rt.py) the actuator
+# echoes back via conntrack reply (echo-udp.py) — no NodePort/Service, pod is the initiator.
+#
+#   f4 "right node, no fast path": nodeName alpha-w1 (TSN-capable node, isolated cores 2-3)
+#   f3 "wrong node":               change nodeName to alpha-w2 (must be isolated too — A)
+#
+# Guaranteed QoS (cpu req==lim, integer) so the kubelet static CPU Manager pins it to the
+# isolated cores -> apples-to-apples with the DRA-TSN run.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vplc-baseline
+  namespace: dratsn-test
+  labels:
+    app: vplc
+    scenario: f4-cilium-path
+spec:
+  restartPolicy: Never
+  nodeName: alpha-w1          # f4. switch to alpha-w2 for f3.
+  containers:
+    - name: vplc
+      image: nicolaka/netshoot   # python3 round-trip probe (probe-loop-rt.py)
+      command: ["sh", "-c", "echo vPLC-baseline up '(cilium path, no DRA-TSN)'; sleep infinity"]
+      resources:
+        requests: { cpu: "2", memory: "1Gi" }
+        limits:   { cpu: "2", memory: "1Gi" }

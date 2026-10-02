@@ -1,0 +1,23 @@
+# build output
+bin/
+# NOTE: pkg/ebpf/*_bpfel.o ARE tracked. bpf2go embeds them into the Go binary,
+# so a clone without clang + bpf2go still builds. Only the actuator's loose
+# object is excluded.
+examples/mock-actuator/*.o
+
+# NOTE: bpf/headers/vmlinux.h IS tracked on purpose. It is generated
+# (`make vmlinux`) and host-kernel specific, but shipping it is what lets a
+# clone run `make generate build` without a matching kernel to dump from.
+
+# experiment venv + bulky raw captures (aggregated CSVs and figures stay tracked)
+experiments/.venv/
+experiments/**/results/**/raw/
+experiments/**/results/**/*.pcap
+experiments/**/results/*/state*.env
+experiments/**/results/*/macs-*.json
+scripts/results/
+
+# local tooling
+.venv/
+__pycache__/
+*.pyc

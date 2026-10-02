@@ -1,0 +1,51 @@
+# fig_mixed workload ladder (ADR-0039 §1).
+#
+# The names double as the `tier` label on every pod, which is how the watcher
+# classifies what got displaced.
+#
+# The ladder encodes ONE distinction: guaranteed above elastic. "elastic" here
+# means preemptible — pushable — not "can be scaled down". What decides a
+# preemption is whether a workload may be interrupted, and interruptibility is
+# the property the shop floor actually has an opinion about.
+#
+# Ordering within each half is secondary but not arbitrary:
+#   ai-inference sits below vplc-line because inference feeds the control loop
+#   rather than closing it; logging sits below ai-training because it is the
+#   absorber of last resort and has no resource constraint at all.
+#
+# preemptionPolicy is the default (PreemptLowerPriority) everywhere, and the fill
+# deliberately leaves no room: a displaced guaranteed workload MUST preempt to
+# land (run.sh fill(), ADR-0039 §5). That is what makes the elastic/guaranteed
+# axis do visible work — with spare headroom nothing is ever pushed and the
+# ladder below has no observable effect.
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: vplc-line
+value: 90000
+globalDefault: false
+description: "Control loop for one production line. TSN path required, not preemptible."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: ai-inference
+value: 80000
+globalDefault: false
+description: "Real-time visual inspection: GPU verdict fed back over TSN. Requires both, not preemptible."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: ai-training
+value: 20000
+globalDefault: false
+description: "Model training. GPU required, but may be pushed — it is checkpointed work."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: logging
+value: 10000
+globalDefault: false
+description: "Log/metric shipping. No special resource, fully preemptible: the absorber."

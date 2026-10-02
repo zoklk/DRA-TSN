@@ -1,0 +1,2 @@
+arm,cycle,workload,node0,on_tsn0,node1,on_tsn1,domain,stream_ok,detect_ms,evict_ms,sched_ms,ready_ms,resched_ms,pending
+dratsn,1,vplc-line,dratsn-worker2,1,dratsn-worker1,1,cell-A,1,8089,10742,11462,14089,14089,0

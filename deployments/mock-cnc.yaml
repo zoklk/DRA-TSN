@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mock-cnc
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mock-cnc }
+  template:
+    metadata:
+      labels: { app: mock-cnc }
+    spec:
+      containers:
+        - name: mock-cnc
+          image: REGISTRY/dratsn-mock-cnc:TAG
+          imagePullPolicy: Always
+          args: ["-addr=:8080", "-v=2"]
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mock-cnc
+  namespace: kube-system
+spec:
+  selector:
+    app: mock-cnc
+  ports:
+    - port: 8080
+      targetPort: 8080

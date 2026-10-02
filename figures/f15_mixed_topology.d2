@@ -1,0 +1,62 @@
+# F15 — 경로 소실 실험(5.5절)의 토폴로지와 스트림 HA 배치.
+# 한 장에 담는 것: 노드 6대의 자원 구성, 워크로드별 스트림이 M=3 중 k=2에만
+# 깔려 있다는 사실, 그리고 사망하는 노드가 그 k 안에 있다는 것.
+# render: ./render.sh
+
+direction: down
+
+cells: "현장 (스트림 도메인)" {
+  style: {fill: "#f4f7fb"; stroke: "#8a8a86"}
+  a: "cell-A\nvplc-line (제어)" {shape: rectangle; style.fill: "#ffffff"}
+  b: "cell-B\nai-inference (검사)" {shape: rectangle; style.fill: "#ffffff"}
+}
+
+tsn: "TSN 노드 풀 (M = 3)" {
+  style: {fill: "#eef4fd"; stroke: "#2a78d6"}
+  w1: "worker1\nTSN" {shape: rectangle; style.fill: "#ffffff"}
+  w2: "worker2\nTSN + GPU  (격전지)" {
+    shape: rectangle
+    style: {fill: "#fdecec"; stroke: "#d64545"; stroke-width: 2}
+  }
+  w3: "worker3\nTSN + GPU  (격전지)" {shape: rectangle; style.fill: "#ffffff"}
+}
+
+gen: "일반 노드 풀" {
+  style: {fill: "#f7f7f5"; stroke: "#52514e"}
+  w4: "worker4\nGPU" {shape: rectangle; style.fill: "#ffffff"}
+  w5: "worker5\nGPU" {shape: rectangle; style.fill: "#ffffff"}
+  w6: "worker6\n제약 없음" {shape: rectangle; style.fill: "#ffffff"}
+}
+
+cells.a -> tsn.w1: "스트림 예약" {style: {stroke: "#2a78d6"; stroke-width: 3}}
+cells.a -> tsn.w2: "스트림 예약" {style: {stroke: "#2a78d6"; stroke-width: 3}}
+cells.b -> tsn.w2: "스트림 예약" {style: {stroke: "#1baf7a"; stroke-width: 3}}
+cells.b -> tsn.w3: "스트림 예약" {style: {stroke: "#1baf7a"; stroke-width: 3}}
+
+note_ha: "k = 2 of M = 3\nTSN NIC을 가졌다고 경로를 가진 것은 아니다\n(worker3은 cell-A 경로가 없다)" {
+  shape: rectangle
+  style: {fill: "#fff6e5"; stroke: "#eda100"; font-size: 13}
+}
+tsn.w3 -> note_ha {style: {stroke: "#eda100"; stroke-dash: 3}}
+
+fault: "사건: worker2 사망\n(docker stop -t 0)" {
+  shape: rectangle
+  style: {fill: "#fdecec"; stroke: "#d64545"; font-size: 14; bold: true}
+}
+fault -> tsn.w2 {style: {stroke: "#d64545"; stroke-width: 2}}
+
+load: "체제: 총 사용률 90% 고정\n사망 노드도 90%까지 채운다\nelastic 부하는 갈 곳이 없어 Pending으로 남는다 (비용)" {
+  shape: rectangle
+  style: {fill: "#f7f7f5"; stroke: "#8a8a86"; font-size: 13}
+}
+
+arms: "질문: 살아남은 경로를 누가 찾는가" {
+  style: {fill: "#eefaf4"; stroke: "#1baf7a"}
+  plc: "물리 PLC\n찾는 주체 없음 (사람)" {shape: rectangle; style.fill: "#ffffff"}
+  static: "정적 K8s\n라벨은 노드를 구분하지 못한다\n→ CPU 점수로 고른다" {shape: rectangle; style.fill: "#ffffff"}
+  dratsn: "DRA-TSN\nResourceSlice가 생존 경로만 게시\n→ 스케줄러가 찾는다" {
+    shape: rectangle
+    style: {fill: "#ffffff"; stroke: "#1baf7a"; stroke-width: 2}
+  }
+}
+tsn.w1 -> arms: "생존 cell-A 경로" {style: {stroke: "#2a78d6"; stroke-dash: 3}}

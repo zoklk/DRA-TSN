@@ -1,0 +1,91 @@
+# kind cluster for the control-plane reproduction path.
+# K8s >= 1.34 (DRA GA / resource.k8s.io/v1) — kind v0.30+ default node image is fine.
+#
+# 6 workers: 3 labelled TSN-capable by deploy.sh + 3 general (ADR-0037).
+# The earlier 12-worker shape existed so a blind scheduler could not land on a
+# TSN node by luck; in the tight regime of fig_regime the TSN nodes sit at ~90%
+# requests, so the regime itself replaces that statistical device — a blind
+# scheduler is pushed away from full TSN nodes by its own LeastAllocated score.
+# Three general nodes hold the displaced IT workloads after preemption.
+#
+# nodeRegistration.name gives every worker a number (worker1..worker6): kind
+# hardcodes the CONTAINER names (<cluster>-worker, -worker2, ...), so the
+# docker-facing tools map worker1 -> the unnumbered container (node_container
+# in run.sh / _container in live_serve.py). create-cluster.sh rewrites the
+# dratsn- prefixes for other cluster names.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: dratsn
+# Cluster-level patches: applied to EVERY node's generated kubeadm.conf, and
+# disjoint from the per-node JoinConfiguration patches below.
+#
+# Node-failure detection is cut from the kube defaults (~44 s measured median in
+# fig_regime paper2) to ~8 s. Detection is an arm-invariant constant, so it is
+# never compared between arms (ADR-0039 §10); the point is to make the stopped
+# interval of the production waveform a realistic length and to keep the live
+# demo loop from being dominated by dead time.
+#
+#   detect ∈ [grace − renew, grace + monitorPeriod]
+#   renew  = nodeLeaseDurationSeconds × 0.25   (kubelet; there is no separate knob)
+#   grace  = 4 × renew                          → tolerates 4 missed renewals
+#
+# Do NOT set nodeStatusUpdateFrequency: leaving nodeStatusReportFrequency unset
+# makes it inherit that value, and every kubelet then PATCHes a full NodeStatus
+# at that rate. It has no effect on detection anyway.
+#
+# kind v0.30 generates kubeadm.k8s.io/v1beta3, where extraArgs is a MAP (the
+# v1beta4 [{name,value}] list form would fail to unmarshal). apiVersion is
+# omitted on purpose — an absent apiVersion matches any version, the same
+# convention the per-node patches below rely on.
+#
+# KubeletConfiguration must live at cluster level: workers download their kubelet
+# config from the kube-system/kubelet-config ConfigMap that `kubeadm init` writes
+# on the control plane, so a worker-scoped patch would be ignored.
+kubeadmConfigPatches:
+- |
+  kind: ClusterConfiguration
+  controllerManager:
+    extraArgs:
+      node-monitor-grace-period: "8s"
+      node-monitor-period: "2s"
+- |
+  kind: KubeletConfiguration
+  nodeLeaseDurationSeconds: 8
+nodes:
+- role: control-plane
+- role: worker    # dratsn-worker1  — TSN-capable (container: dratsn-worker)
+  kubeadmConfigPatches:
+  - |
+    kind: JoinConfiguration
+    nodeRegistration:
+      name: dratsn-worker1
+- role: worker    # dratsn-worker2  — TSN-capable
+  kubeadmConfigPatches:
+  - |
+    kind: JoinConfiguration
+    nodeRegistration:
+      name: dratsn-worker2
+- role: worker    # dratsn-worker3  — TSN-capable
+  kubeadmConfigPatches:
+  - |
+    kind: JoinConfiguration
+    nodeRegistration:
+      name: dratsn-worker3
+- role: worker    # dratsn-worker4  — general
+  kubeadmConfigPatches:
+  - |
+    kind: JoinConfiguration
+    nodeRegistration:
+      name: dratsn-worker4
+- role: worker    # dratsn-worker5  — general
+  kubeadmConfigPatches:
+  - |
+    kind: JoinConfiguration
+    nodeRegistration:
+      name: dratsn-worker5
+- role: worker    # dratsn-worker6  — general
+  kubeadmConfigPatches:
+  - |
+    kind: JoinConfiguration
+    nodeRegistration:
+      name: dratsn-worker6

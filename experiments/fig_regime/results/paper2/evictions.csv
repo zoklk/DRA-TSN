@@ -1,0 +1,11 @@
+arm,trial,pod,priority_class,node,correct,ai_resched_ms
+dratsn,1,ai-dratsn-worker3-8c4f7b6b4-vxrgd,it-ai,dratsn-worker3,1,59021
+dratsn,2,ai-dratsn-worker3-8c4f7b6b4-c74xv,it-ai,dratsn-worker3,1,52388
+dratsn,3,ai-dratsn-worker3-8c4f7b6b4-mnm5p,it-ai,dratsn-worker3,1,47311
+dratsn,4,ai-dratsn-worker3-8c4f7b6b4-xgmvz,it-ai,dratsn-worker3,1,55373
+dratsn,5,ai-dratsn-worker3-8c4f7b6b4-zzdg5,it-ai,dratsn-worker3,1,53424
+dratsn,6,ai-dratsn-worker3-8c4f7b6b4-l6tbc,it-ai,dratsn-worker3,1,47256
+dratsn,7,ai-dratsn-worker3-8c4f7b6b4-v7fpn,it-ai,dratsn-worker3,1,46438
+dratsn,8,ai-dratsn-worker3-8c4f7b6b4-fknrh,it-ai,dratsn-worker3,1,48579
+dratsn,9,ai-dratsn-worker3-8c4f7b6b4-wfgr9,it-ai,dratsn-worker3,1,44941
+dratsn,10,ai-dratsn-worker3-8c4f7b6b4-tbcbz,it-ai,dratsn-worker3,1,44853

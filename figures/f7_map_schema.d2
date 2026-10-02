@@ -1,0 +1,48 @@
+# F7 — bpf map schema. Programmed by NRI at pod start, read by eBPF in the hot path.
+# Two separate HASH maps (asymmetric key/value) plus the devmap. Layout byte-for-byte
+# synced with the Go structs and the C header; IP/port in network byte order.
+...@_common
+direction: right
+
+tx: tx_flows  (HASH, 1024) {
+  shape: sql_table
+  src_ip: "__be32   key (pod)" {constraint: primary_key}
+  dst_ip: "__be32   key" {constraint: primary_key}
+  dst_port: "__be16   key" {constraint: primary_key}
+  proto: "__u8   key" {constraint: primary_key}
+  vlan_id: __u16
+  pcp: __u8
+  flags: "__u8   SNAT bit0"
+  snat_src_ip: __be32
+  dst_mac: "u8[6]   listener"
+  src_mac: "u8[6]   NIC"
+  nic_ifindex: __u32
+}
+
+rx: rx_flows  (HASH, 1024) {
+  shape: sql_table
+  src_ip: "__be32   key (talker)" {constraint: primary_key}
+  orig_dst_ip: "__be32   key (node ep)" {constraint: primary_key}
+  dst_port: "__be16   key" {constraint: primary_key}
+  proto: "__u8   key" {constraint: primary_key}
+  pod_ip: __be32
+  pod_port: __be16
+  pod_mac: "u8[6]"
+  veth_ifindex: __u32
+  expected_vid: "__u16   opt"
+  talker_mac: "u8[6]   opt"
+}
+
+dev: xdp_devmap  (DEVMAP_HASH, 1024) {
+  shape: sql_table
+  veth_ifindex: "__u32   key" {constraint: primary_key}
+  redirect_dev: __u32
+}
+
+rx.veth_ifindex -> dev.veth_ifindex: RX redirect target = devmap key {style.stroke: "#c0392b"; style.stroke-width: 2}
+
+note: |md
+  Programmed by NRI (insert at pod start / delete at stop), read by eBPF TX/RX in the
+  hot path. Layout byte-for-byte synced with Go structs (pkg/ebpf/maps_types.go) and
+  the C header (bpf/tsn_common.h). rx_key layout == tx_key. IP/port in network byte order.
+| {near: bottom-center; style.font-size: 12}

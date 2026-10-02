@@ -1,0 +1,449 @@
+{
+  "scenario": "fault",
+  "compression": 60,
+  "source": {
+    "measured": "/home/netai/netAi/TSN-dra/dratsn/experiments/fig_regime/results/paper/regime.csv",
+    "rows": {
+      "spare": 20,
+      "vanilla": 20,
+      "dratsn": 20
+    },
+    "note": "placements, stages and evictions measured on kind (fig_regime); physical track and repair time are declared; spare arm is f16-only, not a twin track",
+    "selection": "modal-outcome"
+  },
+  "cluster": {
+    "nodes": [
+      {
+        "name": "dratsn-worker",
+        "tsn": true,
+        "n": {
+          "max_latency_ns": 1000000,
+          "accumulated_ns": 400000
+        }
+      },
+      {
+        "name": "dratsn-worker2",
+        "tsn": true,
+        "n": {
+          "max_latency_ns": 1000000,
+          "accumulated_ns": 100000
+        }
+      },
+      {
+        "name": "dratsn-worker3",
+        "tsn": true,
+        "n": {
+          "max_latency_ns": 1000000,
+          "accumulated_ns": 250000
+        }
+      },
+      {
+        "name": "dratsn-worker4",
+        "tsn": false
+      },
+      {
+        "name": "dratsn-worker5",
+        "tsn": false
+      },
+      {
+        "name": "dratsn-worker6",
+        "tsn": false
+      }
+    ],
+    "util_pct": {
+      "tsn": 90,
+      "general": 90
+    },
+    "fault_node": "dratsn-worker2",
+    "net": {
+      "capacity_mbps": 1000,
+      "by_arm": {
+        "dratsn": {
+          "dratsn-worker": {
+            "pre_mbps": 755,
+            "post_mbps": 610,
+            "pre_pods": {
+              "it-ai": {
+                "count": 5,
+                "mcpu": 8700
+              },
+              "vplc-line": {
+                "count": 1,
+                "mcpu": 2000
+              }
+            },
+            "post_pods": {
+              "it-ai": {
+                "count": 4,
+                "mcpu": 6700
+              },
+              "vplc-line": {
+                "count": 2,
+                "mcpu": 4000
+              }
+            }
+          },
+          "dratsn-worker2": {
+            "pre_mbps": 610,
+            "post_mbps": 0,
+            "pre_pods": {
+              "it-ai": {
+                "count": 4,
+                "mcpu": 6700
+              },
+              "vplc-emergency": {
+                "count": 1,
+                "mcpu": 2000
+              },
+              "vplc-line": {
+                "count": 1,
+                "mcpu": 2000
+              }
+            },
+            "post_pods": {}
+          },
+          "dratsn-worker3": {
+            "pre_mbps": 755,
+            "post_mbps": 610,
+            "pre_pods": {
+              "it-ai": {
+                "count": 5,
+                "mcpu": 8700
+              },
+              "vplc-line": {
+                "count": 1,
+                "mcpu": 2000
+              }
+            },
+            "post_pods": {
+              "it-ai": {
+                "count": 4,
+                "mcpu": 6700
+              },
+              "vplc-emergency": {
+                "count": 1,
+                "mcpu": 2000
+              },
+              "vplc-line": {
+                "count": 1,
+                "mcpu": 2000
+              }
+            }
+          },
+          "dratsn-worker4": {
+            "pre_mbps": 600,
+            "post_mbps": 750,
+            "pre_pods": {
+              "it-historian": {
+                "count": 10,
+                "mcpu": 9366
+              }
+            },
+            "post_pods": {
+              "it-ai": {
+                "count": 1,
+                "mcpu": 2000
+              },
+              "it-historian": {
+                "count": 10,
+                "mcpu": 9366
+              }
+            }
+          },
+          "dratsn-worker5": {
+            "pre_mbps": 600,
+            "post_mbps": 600,
+            "pre_pods": {
+              "it-historian": {
+                "count": 10,
+                "mcpu": 9366
+              }
+            },
+            "post_pods": {
+              "it-historian": {
+                "count": 10,
+                "mcpu": 9366
+              }
+            }
+          },
+          "dratsn-worker6": {
+            "pre_mbps": 600,
+            "post_mbps": 750,
+            "pre_pods": {
+              "it-historian": {
+                "count": 10,
+                "mcpu": 9366
+              }
+            },
+            "post_pods": {
+              "it-ai": {
+                "count": 1,
+                "mcpu": 2000
+              },
+              "it-historian": {
+                "count": 10,
+                "mcpu": 9366
+              }
+            }
+          }
+        },
+        "vanilla": {
+          "dratsn-worker": {
+            "pre_mbps": 755,
+            "post_mbps": 755,
+            "pre_pods": {
+              "it-ai": {
+                "count": 5,
+                "mcpu": 8700
+              },
+              "vplc-line": {
+                "count": 1,
+                "mcpu": 2000
+              }
+            },
+            "post_pods": {
+              "it-ai": {
+                "count": 5,
+                "mcpu": 8700
+              },
+              "vplc-line": {
+                "count": 1,
+                "mcpu": 2000
+              }
+            }
+          },
+          "dratsn-worker2": {
+            "pre_mbps": 610,
+            "post_mbps": 0,
+            "pre_pods": {
+              "it-ai": {
+                "count": 4,
+                "mcpu": 6700
+              },
+              "vplc-emergency": {
+                "count": 1,
+                "mcpu": 2000
+              },
+              "vplc-line": {
+                "count": 1,
+                "mcpu": 2000
+              }
+            },
+            "post_pods": {}
+          },
+          "dratsn-worker3": {
+            "pre_mbps": 755,
+            "post_mbps": 755,
+            "pre_pods": {
+              "it-ai": {
+                "count": 5,
+                "mcpu": 8700
+              },
+              "vplc-line": {
+                "count": 1,
+                "mcpu": 2000
+              }
+            },
+            "post_pods": {
+              "it-ai": {
+                "count": 5,
+                "mcpu": 8700
+              },
+              "vplc-line": {
+                "count": 1,
+                "mcpu": 2000
+              }
+            }
+          },
+          "dratsn-worker4": {
+            "pre_mbps": 600,
+            "post_mbps": 600,
+            "pre_pods": {
+              "it-historian": {
+                "count": 10,
+                "mcpu": 9366
+              }
+            },
+            "post_pods": {
+              "it-historian": {
+                "count": 10,
+                "mcpu": 9366
+              }
+            }
+          },
+          "dratsn-worker5": {
+            "pre_mbps": 600,
+            "post_mbps": 605,
+            "pre_pods": {
+              "it-historian": {
+                "count": 10,
+                "mcpu": 9366
+              }
+            },
+            "post_pods": {
+              "it-historian": {
+                "count": 10,
+                "mcpu": 9366
+              },
+              "vplc-line": {
+                "count": 1,
+                "mcpu": 2000
+              }
+            }
+          },
+          "dratsn-worker6": {
+            "pre_mbps": 600,
+            "post_mbps": 605,
+            "pre_pods": {
+              "it-historian": {
+                "count": 10,
+                "mcpu": 9366
+              }
+            },
+            "post_pods": {
+              "it-historian": {
+                "count": 10,
+                "mcpu": 9366
+              },
+              "vplc-emergency": {
+                "count": 1,
+                "mcpu": 2000
+              }
+            }
+          }
+        }
+      }
+    },
+    "net_model": {
+      "bw_mbps": {
+        "vplc-emergency": 5,
+        "vplc-line": 5,
+        "ot-monitoring": 20,
+        "it-ai": 150,
+        "it-historian": 60
+      },
+      "capacity_mbps": 1000,
+      "node_alloc_mcpu": 12000,
+      "note": "declared per-tier bandwidth x measured pod placement (raw/pods-*.json); a request ledger like util_pct, no traffic was measured or generated"
+    }
+  },
+  "cells": [
+    {
+      "track": "physical",
+      "start": {
+        "node": "fixed-plc",
+        "on_tsn": true,
+        "tagged": true
+      },
+      "disruptions": [
+        {
+          "t_ms": 2400000.0,
+          "down_ms": 3600000.0,
+          "resume": {
+            "node": "fixed-plc",
+            "on_tsn": true,
+            "tagged": true
+          },
+          "label": "PLC 교체 (문헌 기반 하한, 실측 아님)"
+        }
+      ]
+    },
+    {
+      "track": "vanilla",
+      "start": {
+        "node": "dratsn-worker2",
+        "on_tsn": true,
+        "tagged": false
+      },
+      "disruptions": [
+        {
+          "t_ms": 2400000.0,
+          "down_ms": 50950.0,
+          "resume": {
+            "node": "dratsn-worker5",
+            "on_tsn": false,
+            "tagged": false
+          },
+          "label": "재배치 (trial 5, vplc-line-c)",
+          "stages": {
+            "detect_ms": 47732.0,
+            "evict_ms": 50370.0,
+            "sched_ms": 50370.0,
+            "ready_ms": 50950.0
+          },
+          "evictions": [],
+          "peer": {
+            "vplc": "vplc-emg",
+            "start": {
+              "node": "dratsn-worker2",
+              "on_tsn": true,
+              "tagged": false
+            },
+            "down_ms": 51562.0,
+            "resume": {
+              "node": "dratsn-worker6",
+              "on_tsn": false,
+              "tagged": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "track": "dratsn",
+      "start": {
+        "node": "dratsn-worker2",
+        "on_tsn": true,
+        "tagged": true
+      },
+      "disruptions": [
+        {
+          "t_ms": 2400000.0,
+          "down_ms": 50146.0,
+          "resume": {
+            "node": "dratsn-worker3",
+            "on_tsn": true,
+            "tagged": true
+          },
+          "label": "재배치+선점 (trial 9, vplc-emg)",
+          "stages": {
+            "detect_ms": 45131.0,
+            "evict_ms": 47708.0,
+            "sched_ms": 47708.0,
+            "ready_ms": 50146.0
+          },
+          "evictions": [
+            {
+              "pod": "ai-dratsn-worker3-697d7ddc74-5hvvq",
+              "priority_class": "it-ai",
+              "node": "dratsn-worker3",
+              "ai_resched_ms": 48931.0,
+              "resched_node": "dratsn-worker6"
+            },
+            {
+              "pod": "ai-dratsn-worker-5c49487485-r87dd",
+              "priority_class": "it-ai",
+              "node": "dratsn-worker",
+              "ai_resched_ms": 49555.0,
+              "resched_node": "dratsn-worker4"
+            }
+          ],
+          "peer": {
+            "vplc": "vplc-line-c",
+            "start": {
+              "node": "dratsn-worker2",
+              "on_tsn": true,
+              "tagged": true
+            },
+            "down_ms": 50146.0,
+            "resume": {
+              "node": "dratsn-worker",
+              "on_tsn": true,
+              "tagged": true
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

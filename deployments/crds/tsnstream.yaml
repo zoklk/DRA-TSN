@@ -1,0 +1,93 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: tsnstreams.tsn.dra.net
+spec:
+  group: tsn.dra.net
+  scope: Cluster
+  names:
+    plural: tsnstreams
+    singular: tsnstream
+    kind: TSNStream
+    shortNames: [tstream]
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - name: Stream
+          type: string
+          jsonPath: .spec.streamId
+        - name: Dir
+          type: string
+          jsonPath: .spec.direction
+        - name: Node
+          type: string
+          jsonPath: .spec.nodeName
+        - name: If
+          type: string
+          jsonPath: .spec.ifName
+        - name: VLAN
+          type: integer
+          jsonPath: .spec.vlanId
+        - name: PCP
+          type: integer
+          jsonPath: .spec.pcp
+        - name: DstIP
+          type: string
+          jsonPath: .spec.dst.ip
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required: [streamId, nodeName, ifName, direction, dst, vlanId, pcp, domainId]
+              properties:
+                streamId: { type: string }
+                nodeName: { type: string }
+                ifName: { type: string }
+                direction:
+                  type: string
+                  enum: [TX, RX]
+                dst:
+                  type: object
+                  required: [ip, port]
+                  properties:
+                    ip: { type: string }
+                    port: { type: integer }
+                    mac: { type: string }
+                vlanId:
+                  type: integer
+                  minimum: 0
+                  maximum: 4094
+                pcp:
+                  type: integer
+                  minimum: 0
+                  maximum: 7
+                domainId: { type: string }
+                talker:
+                  type: object
+                  properties:
+                    ip: { type: string }
+                    mac: { type: string }
+                listener:
+                  type: object
+                  properties:
+                    ip: { type: string }
+                    mac: { type: string }
+                # 802.1Qcc latency figures (ns), scheduler-score-only. Optional:
+                # 0/absent = not provided, stream ignored by the slack score.
+                maxLatencyNs:
+                  type: integer
+                  minimum: 0
+                  maximum: 4294967295
+                accumulatedLatencyNs:
+                  type: integer
+                  minimum: 0
+                  maximum: 4294967295
+            status:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+      subresources:
+        status: {}

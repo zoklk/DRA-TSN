@@ -1,0 +1,67 @@
+# mock-vPLC: a PLC pod controlling BOTH cell-A robot arms. It claims all four TSN
+# streams (TX+RX per arm), so one pod exercises both data-plane directions for both
+# arms:
+#   arm-1 (.11): s-tx / s-rx  (RX node-endpoint port 4840)
+#   arm-2 (.12): s-tx2 / s-rx2 (RX node-endpoint port 4841)
+# The two arms share cell-A's VLAN/PCP and differ only by IP+MAC, so the claim must
+# select each stream by its UNIQUE streamId (domainId+direction alone would match
+# either arm). vlanId/pcp/dst are data-plane fields and are NOT selectable (only
+# streamId/direction/domainId/ifName are) — see pkg/resourceslice/publisher.go.
+# Requires the cell-A streams to exist in the CNC (tests/loop.sh scenario POSTs all
+# four). Driven by tests/dataplane_e2e.sh; latency probe = examples/mock-vplc.
+apiVersion: resource.k8s.io/v1
+kind: ResourceClaimTemplate
+metadata:
+  name: tsn-cell-a-arms
+  namespace: dratsn-test
+spec:
+  spec:
+    devices:
+      requests:
+        - name: tx-arm1
+          exactly:
+            deviceClassName: tsn.dra.net
+            selectors:
+              - cel: { expression: "device.attributes['tsn.dra.net'].streamId == 's-tx'" }
+        - name: rx-arm1
+          exactly:
+            deviceClassName: tsn.dra.net
+            selectors:
+              - cel: { expression: "device.attributes['tsn.dra.net'].streamId == 's-rx'" }
+        - name: tx-arm2
+          exactly:
+            deviceClassName: tsn.dra.net
+            selectors:
+              - cel: { expression: "device.attributes['tsn.dra.net'].streamId == 's-tx2'" }
+        - name: rx-arm2
+          exactly:
+            deviceClassName: tsn.dra.net
+            selectors:
+              - cel: { expression: "device.attributes['tsn.dra.net'].streamId == 's-rx2'" }
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mock-vplc
+  namespace: dratsn-test
+  labels:
+    app: vplc
+spec:
+  restartPolicy: Never
+  containers:
+    - name: vplc
+      # netshoot = a shell + tools; the busy-poll probe (examples/mock-vplc) is a
+      # static binary `kubectl cp`'d in and exec'd. NRI injects TSN_STREAMS (all 4
+      # streams) so the probe's ARMS list mirrors what the data plane programmed.
+      image: nicolaka/netshoot
+      command: ["sh", "-c", "echo mock-vPLC up; echo \"$TSN_STREAMS\"; sleep infinity"]
+      resources:
+        # Guaranteed QoS (requests==limits, integer cpu) so the static CPU Manager
+        # pins this pod to the isolated cores (2,3) for the busy-poll measurement.
+        requests: { cpu: "2", memory: "1Gi" }
+        limits:   { cpu: "2", memory: "1Gi" }
+        claims:
+          - name: tsn
+  resourceClaims:
+    - name: tsn
+      resourceClaimTemplateName: tsn-cell-a-arms

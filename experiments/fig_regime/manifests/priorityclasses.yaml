@@ -1,0 +1,49 @@
+# fig_regime: the five-tier priority ladder of scenario A (ADR-0035, design doc §2).
+# All tiers use the default preemptionPolicy (PreemptLowerPriority) — the
+# experiment's variable is scheduler awareness, not preemption willingness.
+# Values are ordered but otherwise arbitrary; user-defined classes must stay
+# below 1e9. None is globalDefault: pods outside the experiment keep priority 0.
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: vplc-emergency
+value: 100000
+preemptionPolicy: PreemptLowerPriority
+globalDefault: false
+description: "fig_regime tier 1 — emergency-stop vPLC (OT, highest)"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: vplc-line
+value: 90000
+preemptionPolicy: PreemptLowerPriority
+globalDefault: false
+description: "fig_regime tier 2 — line-control vPLC (OT)"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: ot-monitoring
+value: 50000
+preemptionPolicy: PreemptLowerPriority
+globalDefault: false
+description: "fig_regime tier 3 — monitoring stream (low-priority OT)"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: it-ai
+value: 20000
+preemptionPolicy: PreemptLowerPriority
+globalDefault: false
+description: "fig_regime tier 4 — quality-inspection AI inference (IT)"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: it-historian
+value: 10000
+preemptionPolicy: PreemptLowerPriority
+globalDefault: false
+description: "fig_regime tier 5 — historian/backup (IT, lowest)"

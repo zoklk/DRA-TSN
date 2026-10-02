@@ -1,0 +1,32 @@
+[package]
+version = "0.1.0"
+title = "DRATSN live cluster overlay"
+description = "Rewrites /World/ClusterOverlay prim attributes from a live kind cluster via live_serve.py (ADR-0031/0033 live mode)."
+category = "simulation"
+authors = ["DRATSN"]
+readme = "../README.md"
+
+[dependencies]
+# omni.usd is already part of the streaming app; omni.kit.app is kit-core
+# (not an extension — declaring it sends the solver to the remote registry)
+"omni.usd" = {}
+
+[[python.module]]
+name = "dratsn.live"
+
+[settings.exts."dratsn.live"]
+# fig_regime live_serve.py endpoint(s). `urls` = comma-separated, one server
+# per arm/cluster (dual-cluster demo: dratsn + vanilla move at once); `url`
+# is the single-server fallback. localhost when kind and Isaac share a host;
+# the dev-lab cross-host values are set on the container command line.
+url = "http://127.0.0.1:8787/state"
+urls = ""
+poll_hz = 2.0
+# where sim_model.py lives (gauge SIGMA); container path of the synced scripts
+scripts_dir = "/isaac-sim/Documents/dratsn_factory/scripts"
+# open this stage at startup if no dratsn_factory stage is loaded ("" = off)
+auto_stage = ""
+# demo camera pinned after the stage loads (restart boots into an unlit
+# default perspective otherwise). Overview = floor + towers wide shot;
+# /World/Cameras/OverviewCluster = tower close-up.
+camera = "/World/Cameras/Overview"

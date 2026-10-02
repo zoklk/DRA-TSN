@@ -1,0 +1,127 @@
+# tsn-scheduler: upstream kube-scheduler + TSNSlackScore plugin, running as a
+# second scheduler. Only pods with schedulerName: tsn-scheduler are handled;
+# the default scheduler is untouched. Score phase implements lexicographic
+# (spread, then slack) via weight separation: PodTopologySpread 100 vs
+# TSNSlackScore 1 — slack's max normalized contribution (100x1) can never
+# outweigh one spread score step (x100), so slack only breaks spread ties.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tsn-scheduler
+  namespace: kube-system
+---
+# The built-in system:kube-scheduler role carries everything the scheduling
+# framework needs in 1.34 (pods/binding, events, DRA resourceclaims etc.)
+# except: its lease rules are resourceName-restricted to "kube-scheduler", so
+# leader election is disabled instead of granting a custom lease role.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tsn-scheduler:kube-scheduler
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:kube-scheduler
+subjects:
+  - kind: ServiceAccount
+    name: tsn-scheduler
+    namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tsn-scheduler:volume-scheduler
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:volume-scheduler
+subjects:
+  - kind: ServiceAccount
+    name: tsn-scheduler
+    namespace: kube-system
+---
+# TSNSlackScore reads TSNStream CRs directly (latency is not a ResourceSlice
+# attribute, ADR-0022).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tsn-scheduler-tsnstreams
+rules:
+  - apiGroups: ["tsn.dra.net"]
+    resources: ["tsnstreams"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tsn-scheduler-tsnstreams
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tsn-scheduler-tsnstreams
+subjects:
+  - kind: ServiceAccount
+    name: tsn-scheduler
+    namespace: kube-system
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tsn-scheduler-config
+  namespace: kube-system
+data:
+  tsn-scheduler-config.yaml: |
+    apiVersion: kubescheduler.config.k8s.io/v1
+    kind: KubeSchedulerConfiguration
+    leaderElection:
+      leaderElect: false
+    profiles:
+      - schedulerName: tsn-scheduler
+        plugins:
+          score:
+            disabled:
+              - name: "*"
+            enabled:
+              - name: PodTopologySpread
+                weight: 100
+              - name: TSNSlackScore
+                weight: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tsn-scheduler
+  namespace: kube-system
+spec:
+  replicas: 1
+  # Recreate, not RollingUpdate: leaderElect is false (single replica by
+  # design), so a rolling update would briefly run two schedulers that both
+  # bind pods with no election between them.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: { app: tsn-scheduler }
+  template:
+    metadata:
+      labels: { app: tsn-scheduler }
+    spec:
+      serviceAccountName: tsn-scheduler
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: scheduler
+          image: REGISTRY/dratsn-tsn-scheduler:TAG
+          imagePullPolicy: Always
+          args:
+            - "--config=/etc/tsn-scheduler/tsn-scheduler-config.yaml"
+            - "--v=3"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/tsn-scheduler
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: tsn-scheduler-config
